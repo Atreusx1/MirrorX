@@ -75,7 +75,7 @@ npx hardhat node
 Deploy `MirrorPost.sol` to the Hardhat network:
 
 ```bash
-npx hardhat run scripts/deploy.js --network hardhat
+npx hardhat run scripts/deploy.js --network localhost
 ```
 
 - Output includes the contract address (e.g., `0x5FbDB2315678afecb367f032d93F642f64180aa3`).
@@ -86,7 +86,7 @@ npx hardhat run scripts/deploy.js --network hardhat
 Copy the contract ABI to the frontend for Web3.js interaction:
 
 ```bash
-cp artifacts/contracts/MirrorPost.sol/MirrorPost.json ../frontend/public/abis/
+cp artifacts/contracts/MirrorPost.sol/MirrorPost.json ../frontend/src/abis/
 ```
 
 - This creates `frontend/public/abis/MirrorPost.json`.
