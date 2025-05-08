@@ -1,47 +1,25 @@
-import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Header from './components/Header';
-import WalletButton from './components/WalletButton';
-import PostForm from './components/PostForm';
 import Home from './pages/Home';
-import { initWeb3, getContract } from './services/web3';
-import styles from './App.module.css';
+import SubCommunity from './pages/SubCommunity';
+import Profile from './pages/Profile';
+import './App.css';
 
+// Main application component with routing
 function App() {
-  const [account, setAccount] = useState(null);
-  const [contract, setContract] = useState(null);
-
-  useEffect(() => {
-    const loadWeb3 = async () => {
-      try {
-        const accounts = await initWeb3();
-        if (accounts) {
-          setAccount(accounts[0]);
-          const contractInstance = await getContract();
-          setContract(contractInstance);
-        }
-      } catch (error) {
-        console.error('Error initializing Web3:', error);
-        alert('Please ensure MetaMask is installed and connected.');
-      }
-    };
-    loadWeb3();
-  }, []);
-
   return (
-    <div className={styles.app}>
-      <Header />
-      <main className={styles.main}>
-        {account ? (
-          <>
-            <WalletButton account={account} />
-            <PostForm account={account} contract={contract} />
-            <Home contract={contract} account={account} />
-          </>
-        ) : (
-          <WalletButton account={null} />
-        )}
-      </main>
-    </div>
+    <Router>
+      <div className="min-h-screen bg-background">
+        <Header />
+        <main className="container mx-auto p-4">
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/subcommunity/:id" element={<SubCommunity />} />
+            <Route path="/profile" element={<Profile />} />
+          </Routes>
+        </main>
+      </div>
+    </Router>
   );
 }
 

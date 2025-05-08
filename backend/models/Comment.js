@@ -1,7 +1,8 @@
 const mongoose = require('mongoose');
 
-const postSchema = new mongoose.Schema({
-    postId: { type: Number, required: true, unique: true },
+const commentSchema = new mongoose.Schema({
+    commentId: { type: Number, required: true },
+    postId: { type: Number, required: true },
     subCommunityId: { type: Number, required: true },
     author: { type: String, required: true },
     username: { type: String },
@@ -11,4 +12,4 @@ const postSchema = new mongoose.Schema({
     isDeleted: { type: Boolean, default: false }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Post', postSchema);
+module.exports = mongoose.model('Comment', commentSchema);

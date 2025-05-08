@@ -1,7 +1,0 @@
-.app {
-  @apply min-h-screen bg-[var(--dark-bg)];
-}
-
-.main {
-  @apply max-w-2xl mx-auto p-4;
-}

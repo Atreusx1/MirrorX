@@ -1,0 +1,64 @@
+.card {
+    background-color: #2a2a2a;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-bottom: 0.5rem;
+    margin-left: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  }
+  
+  .header {
+    margin-bottom: 0.5rem;
+  }
+  
+  .content {
+    color: #ffffff;
+    margin: 0;
+    font-size: 0.95rem;
+  }
+  
+  .meta {
+    color: #aaaaaa;
+    font-size: 0.85rem;
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .actions {
+    display: flex;
+    gap: 0.5rem;
+  }
+  
+  .actionButton {
+    padding: 0.25rem 0.75rem;
+    background-color: #1d9bf0;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  
+  .actionButton:hover {
+    background-color: #1a8cd8;
+  }
+  
+  .deleteButton {
+    padding: 0.25rem 0.75rem;
+    background-color: #ff4444;
+    color: #ffffff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+  }
+  
+  .deleteButton:hover {
+    background-color: #cc3333;
+  }
+  
+  .error {
+    color: #ff4444;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
