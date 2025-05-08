@@ -1,0 +1,7 @@
+.header {
+    @apply bg-dark-card py-4 px-6 shadow;
+  }
+  
+  .title {
+    @apply text-3xl font-bold text-primary;
+  }
