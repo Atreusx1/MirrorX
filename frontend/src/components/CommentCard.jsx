@@ -1,38 +1,64 @@
 import { useState } from 'react';
 import { likeComment, deleteComment } from '../services/web3';
+import { updateCommentLikes } from '../services/api';
+import { getCurrentAccount } from '../services/web3';
 import styles from './CommentCard.module.css';
 
-// CommentCard component displaying a single comment and its actions
 function CommentCard({ comment, postId, isCreator, onUpdate }) {
   const [error, setError] = useState('');
-
-  // Handle comment like
+  const [loading, setLoading] = useState(false);
+  
   const handleLike = async () => {
+    setError('');
+    setLoading(true);
     try {
-      setError('');
+      const account = await getCurrentAccount();
+      if (!account) {
+        throw new Error('Please connect your wallet');
+      }
+      console.log('Liking comment:', { postId, commentId: comment.commentId });
       const tx = await likeComment(postId, comment.commentId);
-      await tx.wait();
+      console.log('Like comment transaction sent:', tx.hash);
+      const receipt = await tx.wait(2);
+      console.log('Like comment transaction receipt:', receipt);
+      if (receipt.status !== 1) {
+        throw new Error('Like comment transaction failed');
+      }
+
+      await updateCommentLikes({
+        postId,
+        commentId: comment.commentId,
+        likes: comment.likes + 1,
+        actor: account,
+        actorUsername: comment.username
+      });
+      console.log('Comment likes updated:', comment.commentId);
       onUpdate();
     } catch (error) {
       console.error('Like comment failed:', error);
-      setError(error.reason || 'Failed to like comment');
+      setError(error.reason || error.message || 'Failed to like comment');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // Handle comment deletion
   const handleDelete = async () => {
     if (!isCreator) {
       setError('Only sub-community creator can delete comments');
       return;
     }
+    setError('');
+    setLoading(true);
     try {
-      setError('');
       const tx = await deleteComment(postId, comment.commentId);
+      console.log('Delete comment transaction sent:', tx.hash);
       await tx.wait();
       onUpdate();
     } catch (error) {
       console.error('Delete comment failed:', error);
       setError(error.reason || 'Failed to delete comment');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -47,11 +73,11 @@ function CommentCard({ comment, postId, isCreator, onUpdate }) {
         </div>
       </div>
       <div className={styles.actions}>
-        <button onClick={handleLike} className={styles.actionButton}>
+        <button onClick={handleLike} disabled={loading} className={styles.actionButton}>
           Like ({comment.likes})
         </button>
         {isCreator && (
-          <button onClick={handleDelete} className={styles.deleteButton}>
+          <button onClick={handleDelete} disabled={loading} className={styles.deleteButton}>
             Delete Comment
           </button>
         )}

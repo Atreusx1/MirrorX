@@ -3,24 +3,21 @@ import CommentCard from './CommentCard';
 import CommentForm from './CommentForm';
 import { likePost, createComment, deletePost, getPost } from '../services/web3';
 import { getComments, saveComment, deletePost as deletePostApi } from '../services/api';
-import { getCurrentAccount } from '../services/web3';
+import { getCurrentAccount, getContract } from '../services/web3';
 import styles from './PostCard.module.css';
 
-// PostCard component displaying a post, its comments, and actions
 function PostCard({ post, onUpdate }) {
   const [comments, setComments] = useState([]);
   const [isCreator, setIsCreator] = useState(false);
   const [error, setError] = useState('');
   const [isValidPost, setIsValidPost] = useState(true);
-
-  // Load comments and check if user is sub-community creator
+  
   useEffect(() => {
     const loadData = async () => {
       try {
-        console.log(`Loading post with postId: ${post.postId}`); // Debug log
-        // Validate post exists on-chain
+        console.log(`Loading post with postId: ${post.postId}`);
         const contractPost = await getPost(post.postId);
-        if (!contractPost.author) {
+        if (!contractPost.author || contractPost.isDeleted) {
           console.error(`Post ${post.postId} does not exist on blockchain`);
           setIsValidPost(false);
           setError('Post does not exist on blockchain');
@@ -43,7 +40,6 @@ function PostCard({ post, onUpdate }) {
     loadData();
   }, [post.postId, post.subCommunityCreator]);
 
-  // Handle post like
   const handleLike = async () => {
     if (!isValidPost) {
       setError('Cannot like: Post does not exist');
@@ -60,7 +56,6 @@ function PostCard({ post, onUpdate }) {
     }
   };
 
-  // Handle comment submission
   const handleCommentSubmit = async (content) => {
     if (!isValidPost) {
       setError('Cannot comment: Post does not exist');
@@ -73,25 +68,58 @@ function PostCard({ post, onUpdate }) {
         setError('Please connect your wallet');
         return;
       }
+      const contract = getContract();
+      const user = await contract.getUser(account);
+      if (!user.exists || !user.username) {
+        setError('Please set a username before commenting');
+        return;
+      }
+
       const tx = await createComment(post.postId, content);
-      await tx.wait();
+      console.log('Comment transaction sent:', tx.hash);
+
+      const receipt = await tx.wait(2);
+      console.log('Comment transaction receipt:', receipt);
+      if (receipt.status !== 1) {
+        throw new Error('Comment transaction failed');
+      }
+
+      const commentCreatedEvent = receipt.logs
+        .map(log => {
+          try {
+            return contract.interface.parseLog(log);
+          } catch {
+            return null;
+          }
+        })
+        .find(event => event && event.name === 'CommentCreated');
+
+      if (!commentCreatedEvent) {
+        throw new Error('CommentCreated event not found');
+      }
+
+      const commentId = Number(commentCreatedEvent.args.commentId);
+      console.log('CommentCreated event found with commentId:', commentId);
+
       await saveComment({
-        commentId: Date.now(), // Temporary; sync with contract commentCount
+        commentId,
         postId: post.postId,
         subCommunityId: post.subCommunityId,
         author: account,
-        username: post.username,
+        username: user.username,
         content,
-        timestamp: Math.floor(Date.now() / 1000)
+        timestamp: Number(commentCreatedEvent.args.timestamp),
+        likes: 0,
+        isDeleted: false
       });
+      console.log('Comment saved to backend:', commentId);
       onUpdate();
     } catch (error) {
       console.error('Comment creation failed:', error);
-      setError(error.reason || 'Failed to create comment');
+      setError(error.reason || error.message || 'Failed to create comment');
     }
   };
 
-  // Handle post deletion
   const handleDeletePost = async () => {
     if (!isValidPost) {
       setError('Cannot delete: Post does not exist');
@@ -114,7 +142,7 @@ function PostCard({ post, onUpdate }) {
   };
 
   if (!isValidPost && !error) {
-    return null; // Don't render invalid posts
+    return null;
   }
 
   return (

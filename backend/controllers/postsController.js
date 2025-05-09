@@ -2,28 +2,33 @@ const Post = require('../models/Post');
 const { ethers } = require('ethers');
 const MirrorPostABI = require('../../smart-contracts/artifacts/contracts/MirrorPost.sol/MirrorPost.json').abi;
 
-// Initialize ethers provider and contract
 const provider = new ethers.JsonRpcProvider('http://127.0.0.1:8545');
-const contractAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3'; // Replace with your deployed address
+const contractAddress = '0x5FbDB2315678afecb367f032d93F642f64180aa3';
 const contract = new ethers.Contract(contractAddress, MirrorPostABI, provider);
 
-// Listen for PostCreated events to sync with backend
+// Listen for PostCreated events
 contract.on('PostCreated', async (postId, subCommunityId, author, username, content, timestamp) => {
-  try {
-    const post = new Post({
-      postId: Number(postId), // Convert BigInt to Number
-      subCommunityId: Number(subCommunityId), // Convert BigInt to Number
-      author,
-      username,
-      content,
-      timestamp: Number(timestamp), // Convert BigInt to Number
-      likes: 0,
-      isDeleted: false
-    });
-    await post.save();
-    console.log(`Post ${postId} saved to backend`);
-  } catch (error) {
-    console.error('Error saving post from event:', error);
+  for (let i = 0; i < 3; i++) {
+    try {
+      console.log('PostCreated event:', { postId: postId.toString(), subCommunityId, author, username, content, timestamp: timestamp.toString() });
+      const post = new Post({
+        postId: Number(postId),
+        subCommunityId: Number(subCommunityId),
+        author,
+        username,
+        content,
+        timestamp: Number(timestamp),
+        likes: 0,
+        isDeleted: false
+      });
+      await post.save();
+      console.log(`Post ${postId} saved to backend`);
+      break;
+    } catch (error) {
+      console.error(`Retry ${i+1} failed for PostCreated ${postId}:`, error);
+      if (i === 2) console.error('Failed to save post after retries:', error);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+    }
   }
 });
 
